@@ -5,7 +5,7 @@ module.exports = function bindErrorHandlers (keystone, app) {
 
 	// Handle 404 (no route matched) errors
 	var default404Handler = function (req, res) {
-		if (req.headers.accept === 'application/json') {
+		if (req.headers.accept && req.headers.accept.indexOf('application/json') !== -1) {
 			return res.status(404).json({ error: 'not found' });
 		}
 		res.status(404).send(keystone.wrapHTMLError('Sorry, no page could be found at this address (404)'));
@@ -18,7 +18,7 @@ module.exports = function bindErrorHandlers (keystone, app) {
 				if (typeof err404 === 'function') {
 					return err404(req, res, next);
 				} else if (typeof err404 === 'string') {
-					if (req.headers.accept === 'application/json') {
+					if (req.headers.accept && req.headers.accept.indexOf('application/json') !== -1) {
 						return res.status(404).json({ error: 'not found' });
 					}
 					return res.status(404).render(err404);
@@ -53,7 +53,7 @@ module.exports = function bindErrorHandlers (keystone, app) {
 			console.log(err.stack || err);
 		}
 		// TODO: Take into account dev settings to send a more useful JSON error
-		if (req.headers.accept === 'application/json') {
+		if (req.headers.accept && req.headers.accept.indexOf('application/json') !== -1) {
 			return res.status(500).json({ error: 'unknown error' });
 		}
 		var msg = '';
@@ -79,7 +79,7 @@ module.exports = function bindErrorHandlers (keystone, app) {
 				if (typeof err500 === 'function') {
 					return err500(err, req, res, next);
 				} else if (typeof err500 === 'string') {
-					if (req.headers.accept === 'application/json') {
+					if (req.headers.accept && req.headers.accept.indexOf('application/json') !== -1) {
 						return res.status(500).json({ error: 'unknown error' });
 					}
 					res.locals.err = err;

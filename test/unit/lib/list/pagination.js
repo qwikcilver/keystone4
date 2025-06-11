@@ -37,7 +37,7 @@ describe('When paginating results', function () {
 
 	beforeEach(function (done) {
 		// remove any Post documents
-		Post.model.find({}).remove(function (error) {
+		Post.model.deleteMany({}, function (error) {
 			if (error) {
 				done(error);
 			}
@@ -45,7 +45,7 @@ describe('When paginating results', function () {
 			// Add the test Post data
 			async.forEach(testData.posts, function (post, callback) {
 				var newPost = new Post.model(post);
-				newPost.save(callback);
+				newPost.save().then(() => callback()).catch(callback);
 			}, function (error) {
 				done(error);
 			});
@@ -54,7 +54,7 @@ describe('When paginating results', function () {
 
 	after(function (done) {
 		// remove any remaining test data
-		Post.model.find({}).remove(function (error) {
+		Post.model.deleteMany({}, function (error) {
 			done(error);
 		});
 	});
@@ -76,36 +76,36 @@ describe('When paginating results', function () {
 					select: 'title'
 				}).sort({
 					title: 'asc'
-				}).exec(function (error, results) {
-					if (!error) {
-						assert.equal(results.currentPage, pageNumber);
-						assert.equal(results.totalPages, regressionTestData.expectedPages.length);
-						assert.deepStrictEqual(results.pages, regressionTestData.expectedPages);
+				}).exec().then(function (results) {
+					assert.equal(results.currentPage, pageNumber);
+					assert.equal(results.totalPages, regressionTestData.expectedPages.length);
+					assert.deepStrictEqual(results.pages, regressionTestData.expectedPages);
 
-						// If we're on the first page of results, test that there is no
-						// `previous` page to go back to.
-						//
-						// If it's the last page, test that there is no `next`.
-						//
-						// Otherwise test that there are both `previous` and `next`
-						// pages to go to.
-						if (_.first(regressionTestData.expectedPages) === pageNumber) {
-							assert(!results.previous);
-							assert(results.next);
-						}
-						else if (_.last(regressionTestData.expectedPages) === pageNumber) {
-							assert(results.previous);
-							assert(!results.next);
-						}
-						else {
-							assert(results.previous);
-							assert(results.next);
-						}
-
-						// Ensure we don't have more results per page than we
-						// defined.
-						assert(results.results.length <= regressionTestData.perPage);
+					// If we're on the first page of results, test that there is no
+					// `previous` page to go back to.
+					//
+					// If it's the last page, test that there is no `next`.
+					//
+					// Otherwise test that there are both `previous` and `next`
+					// pages to go to.
+					if (_.first(regressionTestData.expectedPages) === pageNumber) {
+						assert(!results.previous);
+						assert(results.next);
 					}
+					else if (_.last(regressionTestData.expectedPages) === pageNumber) {
+						assert(results.previous);
+						assert(!results.next);
+					}
+					else {
+						assert(results.previous);
+						assert(results.next);
+					}
+
+					// Ensure we don't have more results per page than we
+					// defined.
+					assert(results.results.length <= regressionTestData.perPage);
+					callback();
+				}).catch(function (error) {
 					callback(error);
 				});
 
@@ -140,36 +140,32 @@ describe('When paginating results', function () {
 					}
 				}).sort({
 					score: { $meta: 'textScore' }
-				}).exec(function (error, results) {
+				}).exec().then(function (results) {
+					_.each(results.results, function (result) {
+						var score = result.get('score');
+						assert.notEqual(score, undefined);
+					});
 
-					if (!error) {
-						// Ensure our optional $meta expression has added a value.
-						// Each result should have a 'score'
-						_.each(results.results, function (result) {
-							var score = result.get('score');
-							assert.notEqual(score, undefined);
-						});
+					assert.equal(results.currentPage, pageNumber);
+					assert.equal(results.totalPages, searchTestData.expectedPages.length);
+					assert.deepStrictEqual(results.pages, searchTestData.expectedPages);
 
-						// Ensure our paginated result set works as expected
-						assert.equal(results.currentPage, pageNumber);
-						assert.equal(results.totalPages, searchTestData.expectedPages.length);
-						assert.deepStrictEqual(results.pages, searchTestData.expectedPages);
-
-						if (_.first(searchTestData.expectedPages) === pageNumber) {
-							assert(!results.previous);
-							assert(results.next);
-						}
-						else if (_.last(searchTestData.expectedPages) === pageNumber) {
-							assert(results.previous);
-							assert(!results.next);
-						}
-						else {
-							assert(results.previous);
-							assert(results.next);
-						}
-
-						assert(results.results.length <= searchTestData.perPage);
+					if (_.first(searchTestData.expectedPages) === pageNumber) {
+						assert(!results.previous);
+						assert(results.next);
 					}
+					else if (_.last(searchTestData.expectedPages) === pageNumber) {
+						assert(results.previous);
+						assert(!results.next);
+					}
+					else {
+						assert(results.previous);
+						assert(results.next);
+					}
+
+					assert(results.results.length <= searchTestData.perPage);
+					callback();
+				}).catch(function (error) {
 					callback(error);
 				});
 

@@ -33,17 +33,14 @@ describe('List "track" option', function () {
 
 		function getItem(id, done) {
 			if (id) {
-				Test.model.findById(id).exec(function (err, found) {
-					if (err) {
-						throw err;
-					}
-
+				Test.model.findById(id).then(function (found) {
 					if (!found) {
 						throw new Error('test document not found')
 					}
-
 					item = found;
 					done(item);
+				}).catch(function (err) {
+					throw err;
 				});
 			} else {
 				item = new Test.model();
@@ -82,7 +79,7 @@ describe('List "track" option', function () {
 		});
 
 		tasks.push(function (done) {
-			User.model.remove({}, function (err) {
+			User.model.deleteMany({}, function (err) {
 				if (err) {
 					throw err;
 				}
@@ -187,7 +184,7 @@ describe('List "track" option', function () {
 
 			after(function (done) {
 				// post test cleanup
-				Test.model.remove({}, function (err) {
+				Test.model.deleteMany({}, function (err) {
 					if (err) {
 						throw err;
 					}
@@ -269,7 +266,7 @@ describe('List "track" option', function () {
 
 			after(function (done) {
 				// post test cleanup
-				Test.model.remove({}, function (err) {
+				Test.model.deleteMany({}, function (err) {
 					if (err) {
 						throw err;
 					}
@@ -362,7 +359,7 @@ describe('List "track" option', function () {
 
 			after(function (done) {
 				// post test cleanup
-				Test.model.remove({}, function (err) {
+				Test.model.deleteMany({}, function (err) {
 					if (err) {
 						throw err;
 					}
@@ -439,7 +436,7 @@ describe('List "track" option', function () {
 
 			after(function (done) {
 				// post test cleanup
-				Test.model.remove({}, function (err) {
+				Test.model.deleteMany({}, function (err) {
 					if (err) {
 						throw err;
 					}
@@ -526,7 +523,7 @@ describe('List "track" option', function () {
 
 			after(function (done) {
 				// post test cleanup
-				Test.model.remove({}, function (err) {
+				Test.model.deleteMany({}, function (err) {
 					if (err) {
 						throw err;
 					}
@@ -621,7 +618,7 @@ describe('List "track" option', function () {
 
 			after(function (done) {
 				// post test cleanup
-				Test.model.remove({}, function (err) {
+				Test.model.deleteMany({}, function (err) {
 					if (err) {
 						throw err;
 					}

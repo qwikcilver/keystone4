@@ -78,22 +78,8 @@ module.exports = function (req, res) {
 	if (relFields) {
 		query.populate(relFields.join(' '));
 	}
-	query.exec(function (err, results) {
-
-		if (err) return res.status(500).json(err);
-
-		var sendCSV = function (data) {
-
-			res.attachment(req.list.path + '-' + moment().format('YYYYMMDD-HHMMSS') + '.csv');
-			res.setHeader('Content-Type', 'application/octet-stream');
-
-			var content = baby.unparse(data, {
-				delimiter: keystone.get('csv field delimiter') || ',',
-			});
-
-			res.end(content, 'utf-8');
-		};
-
+	// Use Promises for Mongoose 8.x compatibility
+	query.exec().then(function (results) {
 		if (!results.length) {
 			// fast bail on no results
 			return sendCSV([]);
@@ -181,7 +167,8 @@ module.exports = function (req, res) {
 			});
 			return sendCSV(data);
 		}
-
+	}).catch(function (err) {
+		return res.status(500).json(err);
 	});
 
 };

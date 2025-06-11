@@ -38,7 +38,7 @@ types.forEach(function (name) {
 			prop = null;
 		}
 		var where = List.addFiltersToQuery(filters);
-		List.model.find(where, function (err, results) {
+		List.model.find(where).exec().then(function(results) {
 			if (prop) {
 				results = _.map(results, prop);
 				if (stringify) {
@@ -46,13 +46,14 @@ types.forEach(function (name) {
 				}
 			}
 			callback(results);
+		}).catch(function(err) {
+			callback([]); // or handle error as needed
 		});
 	}
 
 	describe('FieldType: ' + name.substr(0,1).toUpperCase() + name.substr(1) + ': Filter', function () {
 		before(function (done) {
-			List.model.remove().exec(function (err) {
-				if (err) throw err;
+			List.model.deleteMany().exec().then(function () {
 				var testItems = {};
 				if (test.getTestItems.length < 2) {
 					testItems[listKey] = test.getTestItems(List);
@@ -64,6 +65,8 @@ types.forEach(function (name) {
 						keystone.createItems(testItems, done);
 					});
 				}
+			}).catch(function (err) {
+				done(err);
 			});
 		});
 		test.testFilters(List, filter);

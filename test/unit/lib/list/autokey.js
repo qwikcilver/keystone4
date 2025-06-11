@@ -16,20 +16,14 @@ describe('Test autokey', function () {
 			content: 'Foo bar bar baz bar bar'
 		});
 
-		post.save(function(err) {
-			if(err) {
-				done(err);
-			}
-
-			Post.model.findOne({ title: 'Foo Bar' }).exec(function(err, post) {
-				if(err) {
-					done(err);
-				}
-
-				demand(post.slug).be(utils.slug('Foo Bar'));
-				done();
-			});
-		});
+		post.save().then(function() {
+			Post.model.findOne({ title: 'Foo Bar' }).exec()
+				.then(function(post) {
+					demand(post.slug).be(utils.slug('Foo Bar'));
+					done();
+				})
+				.catch(done);
+		}).catch(done);
 
 	});
 
@@ -39,42 +33,29 @@ describe('Test autokey', function () {
 			content: 'Foo bar bar baz bar bar'
 		});
 
-		post.save(function(err) {
-			if(err) {
-				done(err);
-			}
-
-			Post.model.findOne({ title: 'Foo Bar 2' }).select( 'content' ).exec(function(err, post) {
-				if(err) {
-					done(err);
-				}
-
-				demand(post.title).be(undefined);
-				post.content = 'narf narf narf';
-
-				post.save(function(err) {
-					if(err) {
-						done(err);
-					}
-
-					Post.model.findOne({ slug: utils.slug('Foo Bar 2') }).exec(function(err, post) {
-						if(err) {
-							done(err);
-						}
-
-						demand(post).be.a.object();
-						demand(post.slug).be(utils.slug('Foo Bar 2'));
-						done();
-					});
-				});
-			});
-		});
+		post.save().then(function() {
+			Post.model.findOne({ title: 'Foo Bar 2' }).select('content').exec()
+				.then(function(post) {
+					demand(post.title).be(undefined);
+					post.content = 'narf narf narf';
+					post.save().then(function() {
+						Post.model.findOne({ slug: utils.slug('Foo Bar 2') }).exec()
+							.then(function(post) {
+								demand(post).be.a.object();
+								demand(post.slug).be(utils.slug('Foo Bar 2'));
+								done();
+							})
+							.catch(done);
+					}).catch(done);
+				})
+				.catch(done);
+		}).catch(done);
 
 	});
 
 	after(function (done) {
 		// remove any remaining test data
-		Post.model.find({}).remove(function (error) {
+		Post.model.deleteMany({}, function (error) {
 			done(error);
 		});
 	});

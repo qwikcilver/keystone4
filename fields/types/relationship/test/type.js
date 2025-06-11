@@ -13,7 +13,9 @@ exports.testFieldType = function (List) {
 
 	var relatedItem = new List.model();
 	before(function (done) {
-		relatedItem.save(done);
+		relatedItem.save().then(function() {
+			done();
+		}).catch(done);
 	});
 
 	describe('single', function () {
@@ -131,12 +133,12 @@ exports.testFieldType = function (List) {
 			var testItem = new List.model();
 			List.fields.single.updateItem(testItem, { single: relatedItem.id }, function () {
 				// TODO: We should be testing for errors here
-				testItem.save(function (err, updatedItem) {
-					List.model.findById(updatedItem.id, function (err, persistedData) {
+				testItem.save().then(function(updatedItem) {
+					List.model.findById(updatedItem.id).then(function (persistedData) {
 						demand(String(persistedData.single)).equal(String(relatedItem.id));
 						done();
-					});
-				});
+					}).catch(done);
+				}).catch(done);
 			});
 		});
 
@@ -144,12 +146,12 @@ exports.testFieldType = function (List) {
 			var testItem = new List.model();
 			List.fields.single.updateItem(testItem, { single: relatedItem }, function () {
 				// TODO: We should be testing for errors here
-				testItem.save(function (err, updatedItem) {
-					List.model.findById(updatedItem.id, function (err, persistedData) {
+				testItem.save().then(function(updatedItem) {
+					List.model.findById(updatedItem.id).then(function (persistedData) {
 						demand(String(persistedData.single)).equal(String(relatedItem.id));
 						done();
-					});
-				});
+					}).catch(done);
+				}).catch(done);
 			});
 		});
 
@@ -157,50 +159,50 @@ exports.testFieldType = function (List) {
 			var testItem = new List.model({
 				single: relatedItem.id,
 			});
-			testItem.save(function (err) {
+			testItem.save().then(function() {
 				List.fields.single.updateItem(testItem, { single: null }, function () {
 					// TODO: We should be testing for errors here
-					testItem.save(function (err, updatedItem) {
-						List.model.findById(updatedItem.id, function (err, persistedData) {
+					testItem.save().then(function(updatedItem) {
+						List.model.findById(updatedItem.id).then(function (persistedData) {
 							demand(persistedData.single).be.null();
 							done();
-						});
-					});
+						}).catch(done);
+					}).catch(done);
 				});
-			});
+			}).catch(done);
 		});
 
 		it('should clear the current value when provided ""', function (done) {
 			var testItem = new List.model({
 				single: relatedItem.id,
 			});
-			testItem.save(function (err) {
+			testItem.save().then(function() {
 				List.fields.single.updateItem(testItem, { single: '' }, function () {
 					// TODO: We should be testing for errors here
-					testItem.save(function (err, updatedItem) {
-						List.model.findById(updatedItem.id, function (err, persistedData) {
+					testItem.save().then(function(updatedItem) {
+						List.model.findById(updatedItem.id).then(function (persistedData) {
 							demand(persistedData.single).be.null();
 							done();
-						});
-					});
+						}).catch(done);
+					}).catch(done);
 				});
-			});
+			}).catch(done);
 		});
 
 		it('should not clear the current value when data object does not contain the field', function (done) {
 			var testItem = new List.model({
 				single: relatedItem.id,
 			});
-			testItem.save(function (err) {
+			testItem.save().then(function() {
 				List.fields.single.updateItem(testItem, {}, function () {
-					testItem.save(function (err, updatedItem) {
-						List.model.findById(updatedItem.id, function (err, persistedData) {
+					testItem.save().then(function(updatedItem) {
+						List.model.findById(updatedItem.id).then(function (persistedData) {
 							demand(String(persistedData.single)).equal(String(relatedItem.id));
 							done();
-						});
-					});
+						}).catch(done);
+					}).catch(done);
 				});
-			});
+			}).catch(done);
 		});
 	});
 
@@ -251,34 +253,34 @@ exports.testFieldType = function (List) {
 			var testItem = new List.model({
 				many: [relatedItem.id, relatedItem.id],
 			});
-			testItem.save(function (err) {
+			testItem.save().then(function() {
 				List.fields.many.updateItem(testItem, {}, function () {
-					testItem.save(function (err, updatedItem) {
-						List.model.findById(updatedItem.id, function (err, persistedData) {
+					testItem.save().then(function(updatedItem) {
+						List.model.findById(updatedItem.id).then(function (persistedData) {
 							demand(persistedData.many.length).equal(2);
 							demand(String(persistedData.many[0])).equal(String(relatedItem.id));
 							demand(String(persistedData.many[1])).equal(String(relatedItem.id));
 							done();
-						});
-					});
+						}).catch(done);
+					}).catch(done);
 				});
-			});
+			}).catch(done);
 		});
 
 		it('should update the current values with the new values from the data object', function (done) {
 			var testItem = new List.model({
 				many: [relatedItem.id, relatedItem.id, relatedItem.id],
 			});
-			testItem.save(function (err) {
+			testItem.save().then(function() {
 				List.fields.many.updateItem(testItem, { many: [relatedItem.id, relatedItem.id] }, function () {
-					testItem.save(function (err, updatedItem) {
-						List.model.findById(updatedItem.id, function (err, persistedData) {
+					testItem.save().then(function(updatedItem) {
+						List.model.findById(updatedItem.id).then(function (persistedData) {
 							demand(String(persistedData.many)).to.eql(String([relatedItem.id, relatedItem.id]));
 							done();
-						});
-					});
+						}).catch(done);
+					}).catch(done);
 				});
-			});
+			}).catch(done);
 		});
 	});
 

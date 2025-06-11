@@ -17,9 +17,8 @@ module.exports = function (req, res) {
 		return res.status(401).json({ error: 'fields must be undefined, a string, or an array' });
 	}
 
-	query.exec(function (err, item) {
-
-		if (err) return res.status(500).json({ err: 'database error', detail: err });
+	// Use .exec() with Promises for Mongoose 8.x+
+	query.exec().then(function (item) {
 		if (!item) return res.status(404).json({ err: 'not found', id: req.params.id });
 
 		var tasks = [];
@@ -33,33 +32,26 @@ module.exports = function (req, res) {
 			};
 
 			tasks.push(function (cb) {
-
 				// TODO: proper support for nested relationships in drilldown
-
 				// step back through the drilldown list and load in reverse order to support nested relationships
 				drilldown.def = drilldown.def.split(' ').reverse();
 
 				async.eachSeries(drilldown.def, function (path, done) {
-
 					var field = req.list.fields[path];
-
 					if (!field || field.type !== 'relationship') {
 						throw new Error('Drilldown for ' + req.list.key + ' is invalid: field at path ' + path + ' is not a relationship.');
 					}
-
 					var refList = field.refList;
-
 					if (field.many) {
 						if (!item.get(field.path).length) {
 							return done();
 						}
-						refList.model.find().where('_id').in(item.get(field.path)).limit(4).exec(function (err, results) {
-							if (err || !results) {
-								done(err);
+						refList.model.find().where('_id').in(item.get(field.path)).limit(4).exec().then(function (results) {
+							if (!results) {
+								return done();
 							}
 							var more = (results.length === 4) ? results.pop() : false;
 							if (results.length) {
-								// drilldown.data[path] = results;
 								drilldown.items.push({
 									list: refList.getOptions(),
 									items: _.map(results, function (i) {
@@ -72,14 +64,13 @@ module.exports = function (req, res) {
 								});
 							}
 							done();
-						});
+						}).catch(function (err) { done(err); });
 					} else {
 						if (!item.get(field.path)) {
 							return done();
 						}
-						refList.model.findById(item.get(field.path)).exec(function (err, result) {
+						refList.model.findById(item.get(field.path)).exec().then(function (result) {
 							if (result) {
-								// drilldown.data[path] = result;
 								drilldown.items.push({
 									list: refList.getOptions(),
 									items: [{
@@ -88,17 +79,15 @@ module.exports = function (req, res) {
 									}],
 								});
 							}
-							done(err);
-						});
+							done();
+						}).catch(function (err) { done(err); });
 					}
-
 				}, function (err) {
 					// put the drilldown list back in the right order
 					drilldown.def.reverse();
 					drilldown.items.reverse();
 					cb(err);
 				});
-
 			});
 		}
 
@@ -114,5 +103,7 @@ module.exports = function (req, res) {
 				drilldown: drilldown,
 			}));
 		});
+	}).catch(function (err) {
+		return res.status(500).json({ err: 'database error', detail: err });
 	});
 };

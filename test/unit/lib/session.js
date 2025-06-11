@@ -154,13 +154,13 @@ describe('Keystone.session', function () {
 							self.query = query;
 							return this;
 						}),
-						exec: sinon.spy(function (callback) {
+						exec: sinon.spy(function () {
 							var email = 'test@test.com';
 							self.query.match = self.query.email.test(email);
 							if (self.query.match) {
-								return callback(null, self.user);
+								return Promise.resolve(self.user);
 							}
-							callback(new Error('not found'))
+							return Promise.reject(new Error('not found'));
 						})
 					}
 				};

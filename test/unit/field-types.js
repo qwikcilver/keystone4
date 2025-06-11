@@ -19,7 +19,9 @@ types.forEach(function (name) {
 	List.register();
 	describe('FieldType: ' + name.substr(0,1).toUpperCase() + name.substr(1), function () {
 		before(function (done) {
-			List.model.remove().exec(done);
+			List.model.deleteMany().exec().then(function () {
+				done();
+			}).catch(done);
 		});
 		test.testFieldType(List);
 	});
